@@ -1,0 +1,35 @@
+services:
+  # NGINX Container
+  nginx-proxy:
+    extends:
+      file: reverse-proxy/nginx.yml
+      service: nginx-proxy
+
+  # Sample Server
+  sample-server:
+    extends:
+      file: sample-app/sample-app.yml
+      service: sample-server
+    depends_on:
+      - "nginx-proxy"
+      - "sample-db"
+
+  # Sample DB Server
+  sample-db:
+    extends:
+      file: sample-app/sample-app.yml
+      service: sample-db
+  # Testing/Development Email Server
+  mailhog:
+    extends:
+      file: mailhog/mailhog.yml
+      service: mailhog
+    depends_on:
+      - "nginx-proxy"
+networks:
+  khaos_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_SUBNET:-10.5.0.0/16}

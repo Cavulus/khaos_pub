@@ -1,0 +1,33 @@
+services:
+
+  # NGINX Container
+  nginx-proxy:        
+    build:
+      context: ${KHAOS_DIRECTORY}
+      dockerfile: ${KHAOS_DIRECTORY}/reverse-proxy/DockerFile
+      args:
+        mode: "${MODE:-dev}"
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ${KHAOS_DIRECTORY}/.ssl:/etc/nginx/certs
+      - ./custom_proxy.conf:/etc/nginx/conf.d/custom_proxy.conf:ro
+    command: >
+      bash -c "
+      sed -i -e 's/^\(upstream .*\)/{{ $$ip_hash := or (first (groupByKeys $$containers \"Env.USE_IP_HASH\")) \"0\" }}\n\n\1 \n{{ if ne $$ip_hash \"0\" }} \n     ip_hash;\n{{ end }}/g' nginx.tmpl ;
+      forego start -r 
+      "
+    networks:
+      khaos_network:
+        ipv4_address: ${PROXY_IP}
+networks:
+  khaos_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_SUBNET:-10.5.0.0/16}
+          

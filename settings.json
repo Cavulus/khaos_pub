@@ -1,0 +1,8 @@
+{
+	"KHAOS_DIRECTORY": "${khaos.directory}",
+	"NETWORK_SUBNET": "10.5.0.0/16",
+	"PROXY_IP": "10.5.0.2",
+	"EXTRA_HOSTS":[
+		"*.${MODE:dev}.sample-app.com:${PROXY_IP}"
+	]
+}

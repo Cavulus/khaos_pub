@@ -1,0 +1,70 @@
+services:
+
+  # sample Server
+  sample-server:
+    build:
+      context: ${KHAOS_DIRECTORY}
+      dockerfile: ${KHAOS_DIRECTORY}DockerFile
+      args: 
+        MODE: ${MODE:-dev}
+        APP_DIR: /srv/www/sample
+        BOX_SERVER_APP_CFENGINE: lucee@5.3.8
+        SSL_PORT: 443
+        HEALTHCHECK_URI: https://healthcheck.${MODE:-dev}.sample-app.com
+        BOX_SERVER_PROFILE: development
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+        CFCONFIG_ADMINPASSWORD: ${CFCONFIG_ADMINPASSWORD:-}
+        CFCONFIG_ADMINPASSWORDDEFAULT: ${CFCONFIG_ADMINPASSWORD:-}
+        CFCONFIG_WEB_ADMINPASSWORD: ${CFCONFIG_ADMINPASSWORD:-}
+        BOX_SERVER_CFCONFIGFILE: /config/.CFConfig.${MODE:-dev}.json
+        cfconfigfile: /config/.CFConfig.${MODE:-dev}.json
+        cfconfigdir: ./sample/
+    expose:
+      - "8080"
+      - "80"
+      - "8443"
+    volumes:
+      - ${SAMPLE_APP_DIR}:/srv/www/sample
+      - ${SAMPLE_COLDBOX_DIR}:/srv/www/coldbox
+      - ./server.json:/srv/www/sample/server.json
+    environment:
+      ##################
+      # OS/APP ARGUMENTS
+      - "TZ=US/Eastern"
+      - "MODE=${MODE:-dev}"
+      - "CFCONFIG_ADMINPASSWORD=${CFCONFIG_ADMINPASSWORD:-}"
+      ##################
+      # NGINX ARGUMENTS (see https://hub.docker.com/r/jwilder/nginx-proxy)
+      - "VIRTUAL_HOST=*.${MODE:-dev}.sample-app.com"
+      - "VIRTUAL_PORT=8080"
+      - "CERT_NAME=khaoscert" # Tells nginx to use the wildcard cert, otherwise it looks for a cert named after the server
+      - "DHPARAM_GENERATION=false"
+      - "USE_IP_HASH=1" # Tells nginx to use sticky sessions (if scale parameter is passed)
+      ##################
+      # LUCEE ARGUMENTS
+      - "LUCEE_EXTENSIONS=671B01B8-B3B3-42B9-AC055A356BED5281;name=PostgreSQL;version=42.1.4"
+    networks:
+      - "khaos_network"
+    extra_hosts: [ ${EXTRA_HOSTS} ]
+    restart: on-failure
+    
+    
+  # NGINX Container
+  nginx-proxy:
+    extends:
+      file: ../reverse-proxy/nginx.yml
+      service: nginx-proxy
+
+  # Mailhog container
+  mailhog:
+    extends:
+      file: ../mailhog/mailhog.yml
+      service: mailhog
+
+networks:
+  khaos_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_SUBNET:-10.5.0.0/16}

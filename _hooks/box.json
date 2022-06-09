@@ -1,0 +1,17 @@
+{
+    "name":"Khaos Hooks",
+    "slug":"khaos-hooks",
+    "version":"1.0.0",
+    "author":"Abram Adams",
+    "type":"commandbox-modules",
+    "homepage":"",
+    "shortDescription":"Khaos hooks to allow injecting user specified functionality into Khaos lifecycle hooks",
+    "keywords":"Khaos",
+    "private":true,
+    "dependencies":{},
+    "installPaths":{},
+    "scripts":{},
+    "ignore":[
+        "**/.*"
+    ]
+}

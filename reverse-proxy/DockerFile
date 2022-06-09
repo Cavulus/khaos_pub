@@ -1,0 +1,4 @@
+FROM jwilder/nginx-proxy:1.0
+
+COPY ./.ssl /usr/local/share/ca-certificates
+RUN update-ca-certificates

@@ -1,0 +1,79 @@
+FROM ortussolutions/commandbox as workbench
+# Docker-compse Args can be passed in if the ARG is defined here
+# NOTE: ARGS are scoped to a layer in Dockerfile (i.e. each FROM is a different context)
+# if arguments are needed in subsequent layers then the ARG will need to be defined in that "FROM"
+ARG MODE
+ENV MODE=$MODE
+ARG APP_DIR
+ENV APP_DIR=${APP_DIR}
+ARG BOX_SERVER_APP_CFENGINE
+ENV BOX_SERVER_APP_CFENGINE=$BOX_SERVER_APP_CFENGINE
+ARG BOX_SERVER_CFCONFIGFILE
+ENV BOX_SERVER_CFCONFIGFILE=$BOX_SERVER_CFCONFIGFILE
+ENV cfconfigfile=$BOX_SERVER_CFCONFIGFILE
+ARG BOX_SERVER_PROFILE
+ENV BOX_SERVER_PROFILE=$BOX_SERVER_PROFILE
+ARG CORPORATE_DSN_PASSWORD
+ENV CORPORATE_DSN_PASSWORD=${CORPORATE_DSN_PASSWORD}
+ARG CFCONFIG_ADMINPASSWORD
+ENV CFCONFIG_ADMINPASSWORD=${CFCONFIG_ADMINPASSWORD}
+ARG CFCONFIG_ADMINPASSWORDDEFAULT
+ENV CFCONFIG_ADMINPASSWORDDEFAULT=${CFCONFIG_ADMINPASSWORD}
+ARG CFCONFIG_WEB_ADMINPASSWORD
+ENV CFCONFIG_WEB_ADMINPASSWORD=${CFCONFIG_ADMINPASSWORD}
+ARG HEALTHCHECK_URI
+ENV HEALTHCHECK_URI=${HEALTHCHECK_URI}
+ARG BOX_SERVER_WEB_REWRITES_ENABLE
+ENV BOX_SERVER_WEB_REWRITES_ENABLE=${BOX_SERVER_WEB_REWRITES_ENABLE:-"false"}
+
+ARG cfconfigdir
+
+COPY ${cfconfigdir} /config
+
+RUN mkdir -p ${APP_DIR}
+
+ENV FINALIZE_STARTUP=true
+# WARM UP THE SERVER
+RUN ${BUILD_DIR}/util/warmup-server.sh
+
+# Generate the startup script only
+RUN ${BUILD_DIR}/run.sh
+
+ENV FINALIZE_STARTUP=false
+
+# Debian Slim is the smallest OpenJDK image on that kernel. For most apps, this should work to run your applications
+FROM adoptopenjdk/openjdk11:jdk-11.0.11_9-slim as app
+
+RUN apk add -U tzdata curl & ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+ARG HEALTHCHECK_URI
+ARG MODE
+ARG APP_DIR
+ARG BOX_SERVER_APP_CFENGINE
+ARG BOX_SERVER_CFCONFIGFILE
+ARG cfconfigfile
+ARG BOX_SERVER_WEB_REWRITES_ENABLE
+
+ENV BIN_DIR=/usr/local/bin
+ENV LIB_DIR=/usr/local/lib
+
+# Copies from the commandbox image into this jdk image
+COPY --from=workbench ${LIB_DIR}/serverHome ${LIB_DIR}/serverHome
+COPY --from=workbench /config /config
+COPY --from=workbench ${LIB_DIR}/CommandBox/lib/runwar*.jar ${LIB_DIR}/CommandBox/lib/
+COPY --from=workbench ${BIN_DIR}/startup-final.sh ${BIN_DIR}/run.sh
+COPY --from=workbench ${APP_DIR} ${APP_DIR}
+COPY --from=workbench ${LIB_DIR}/CommandBox ${LIB_DIR}/CommandBox
+
+# Copy in certs
+COPY ./.ssl /certs/
+COPY ./.ca /certs/   
+# Import certs
+RUN \
+    cd ${LIB_DIR}/serverHome/WEB-INF/lucee-server/context/security \
+    && keytool -importcert -alias rootCA -keystore ./cacerts -storepass changeit -noprompt -trustcacerts -file /certs/rootCA.crt 
+
+# Clean up (or Lucee dies trying to create it on first launch)
+RUN rm -fr ${LIB_DIR}/serverHome/WEB-INF/lucee-web/cfclasses/RPC
+# Start Lucee
+CMD ${BIN_DIR}/run.sh

@@ -1,0 +1,12 @@
+component output="false" displayname=""  {
+    public any function configure() {
+        //Default Settings
+        var config = {};
+        config.dsnAccess = {
+            "dsnPrivateEncryptionKey" = "${secrets.DSNPrivateKey}",
+            "username" = "",
+            "password" = ""
+        };
+        return config;
+    }
+}

@@ -1,0 +1,56 @@
+{
+	"repository": "https://github.com/FakeUser/Sample-App.git",
+	"docker":{
+		"baseDockerImage": "ortussolutions/commandbox:lucee5-alpine",
+		"containerName": "sample_app_server"
+	},
+	"branch": "master",
+	"directory":"${sample_app.directory}",
+	"projectFolder": "sample_app/app",
+	"workingDirectory": "${sample_app.directory}sample_app/app",
+	"hostAliases":[ "*.sample_app.${MODE:dev}.sample-app.com" ],
+	"localConfigFile": {
+		"name": "configLocal.cfc",
+		"path": "server/config/",
+		"template": "${khaos.path}sample_app/configLocal.txt"
+	},
+	"envVariables": {
+		"SAMPLE_APP_MODULES_APP_DIR": "${sample_app.directory}sample_app/server-src/modules_app"
+	   ,"SAMPLE_APP_APP_DIR": "${sample_app.directory}sample_app/app/server"
+	   ,"SAMPLE_APP_SANROOT_DIR": "${sample_app.directory}sample_app/sanroot"
+	   ,"SAMPLE_APP_COLDBOX_DIR": "${sample_app.directory}sample_app/coldbox"
+   },
+	"build":{
+		"outputPath": "${sample_app.directory}sample_app/dist"
+	},
+	"secrets": [		
+		
+	],
+	"scripts": ["echo 'hello'"],
+	"initializeScripts": ["echo 'initialization script...'"],
+	"dependencies": [
+		{
+			"name": "tests",
+			"repository": "https://github.com/FakeUser/sample_app_tests.git",
+			"directory": "sample_app",
+			"branch":"master",
+			"scripts":[]
+		}
+	],
+	"modules": [		
+		{
+			"name": "GEO",
+			"path": "server-src/modules/",
+			"repository": "https://github.com/FakeUser/sample_app_geo.git",
+			"branch": "master",
+			"scripts":[]
+		},		
+		{
+			"name": "sample_appProviders",
+			"path": "server-src/modules/",
+			"repository": "https://github.com/FakeUser/sample_app_providers.git",
+			"branch": "master",
+			"scripts":[]
+		}		
+	]
+}

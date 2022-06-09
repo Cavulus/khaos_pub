@@ -1,0 +1,57 @@
+{
+    "author": "Abram Adams",
+    "slug": "khaos-config",
+    "name": "khaos-config",
+    "type": "projects",
+    "version": "0.1.0",
+    "description": "",
+    "shortDescription": "Utilities to assist with building and destroying docker container environments",
+    "bugs": "",
+    "changelog": "",
+    "contributors": [],
+    "devDependencies": {},
+    "dependencies": {
+        "khaosCommands": "^1.0.0"
+    },
+    "documentation": "",
+    "homepage": "",
+    "ignore": [
+        "**/.*",
+        "test",
+        "tests"
+    ],
+    "instructions": "",
+    "keywords": "",
+    "license": [{
+        "type": "",
+        "URL": ""
+    }],
+    "location": "",
+    "private": false,
+    "projectURL": "",
+    "repository": {
+        "type": "",
+        "URL": ""
+    },
+    "scripts": {
+        "preInstall": "!cd _hooks && box package link --force",
+        "postInstall": "!box khaos setup"
+    },
+    "testbox": {
+        "bundles": "",
+        "directory": "tests.specs",
+        "labels": "",
+        "options": {},
+        "recurse": true,
+        "reporter": "",
+        "runner": [{
+            "default": ""
+        }],
+        "testBundles": "",
+        "testSpecs": "",
+        "testSuites": "",
+        "verbose": true,
+        "watchDelay": 500,
+        "watchPaths": "**.cfc"
+    }
+}
